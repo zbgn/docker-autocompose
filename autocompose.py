@@ -144,9 +144,7 @@ def generate(cname, createvolumes=False):
             values['network_mode'] = assumed_default_network
             networks = None
         elif cattrs['HostConfig']['NetworkMode']:
-            print("No networks found. Using network_mode.", file=sys.stderr)
             nm = cattrs['HostConfig']['NetworkMode']
-            print(nm, file=sys.stderr)
             if nm:
                 values['network_mode'] = f'container:{get_container_attrs(nm.split(":")[1])["Name"][1:]}'
             networks = None
