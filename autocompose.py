@@ -149,6 +149,7 @@ def generate(cname, createvolumes=False):
                 values['network_mode'] = f'container:{get_container_attrs(nm.split(":")[1])["Name"][1:]}'
             networks = None
     else:
+        c = docker.from_env()
         networklist = c.networks.list()
         for network in networklist:
             if network.attrs['Name'] in values['networks']:
