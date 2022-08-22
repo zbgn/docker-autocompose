@@ -37,9 +37,9 @@ def main():
     
     # moving the networks = None statemens outside of the for loop. Otherwise any container could reset it.
     if len(networks) == 0:
-    	networks = None
+        networks = None
     if len(volumes) == 0:
-    	volumes = None
+        volumes = None
     render(struct, args, networks, volumes)
 
 def render(struct, args, networks, volumes):
@@ -71,18 +71,20 @@ def is_date_or_time(s: str):
 def fix_label(label: str):
     return f"'{label}'" if is_date_or_time(label) else label
 
-
-def generate(cname, createvolumes=False):
+def get_container_attrs(cname):
     c = docker.from_env()
 
     try:
-        cid = [x.short_id for x in c.containers.list(all=True) if cname == x.name or x.short_id in cname][0]
+        container = c.containers.get(cname)
     except IndexError:
         print("That container is not available.", file=sys.stderr)
         sys.exit(1)
 
-    cattrs = c.containers.get(cid).attrs
+    cattrs = container.attrs
+    return cattrs
 
+def generate(cname, createvolumes=False):
+    cattrs = get_container_attrs(cname)
 
     # Build yaml dict structure
 
@@ -137,9 +139,17 @@ def generate(cname, createvolumes=False):
     networks = {}
     if values['networks'] == set():
         del values['networks']
-        assumed_default_network = list(cattrs['NetworkSettings']['Networks'].keys())[0]
-        values['network_mode'] = assumed_default_network
-        networks = None
+        if len(networks_list := list(cattrs['NetworkSettings']['Networks'].keys())):
+            assumed_default_network = networks_list[0]
+            values['network_mode'] = assumed_default_network
+            networks = None
+        elif cattrs['HostConfig']['NetworkMode']:
+            print("No networks found. Using network_mode.", file=sys.stderr)
+            nm = cattrs['HostConfig']['NetworkMode']
+            print(nm, file=sys.stderr)
+            if nm:
+                values['network_mode'] = f'container:{get_container_attrs(nm.split(":")[1])["Name"][1:]}'
+            networks = None
     else:
         networklist = c.networks.list()
         for network in networklist:
