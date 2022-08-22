@@ -1,5 +1,5 @@
-FROM python:3-alpine
-LABEL org.opencontainers.image.source https://github.com/Red5d/docker-autocompose
+FROM python:3.10-alpine
+LABEL org.opencontainers.image.source https://github.com/zbgn/docker-autocompose
 
 WORKDIR /usr/src/app
 
